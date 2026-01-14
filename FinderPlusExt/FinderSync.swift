@@ -29,7 +29,7 @@ class FinderSync: FIFinderSync {
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
         let menu = NSMenu()
-        
+
         // 一次性获取常用上下文（只调一次 API，性能拉满）
         let selectedURLs = FIFinderSyncController.default().selectedItemURLs() ?? []
         let count = selectedURLs.count
@@ -54,7 +54,7 @@ class FinderSync: FIFinderSync {
                 }
             }()
             guard passLocation else { continue }
-            
+
             // 判断文件类型
             if menuKind != .toolbarItemMenu && !item.conditions.isEmpty {
                 let allConditionsPassed = item.conditions.allSatisfy { condition in
@@ -62,8 +62,12 @@ class FinderSync: FIFinderSync {
                     case .singleOnly:          return isSingle
                     case .multipleOnly:        return isMultiple
                     case .singleOrBlankOnly:   return isSingle || isBlank
-                    case .folderOnly:          return isSingle && (try? singleURL!.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
-                    case .fileOnly:            return isSingle && (try? singleURL!.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == false
+                    case .folderOnly:
+                        guard let url = singleURL else { return false }
+                        return isSingle && (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+                    case .fileOnly:
+                        guard let url = singleURL else { return false }
+                        return isSingle && (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == false
                         //                        case .imageOnly:           return imageExtensions.contains(ext)
                         //                        case .videoOnly:           return videoExtensions.contains(ext)
                         //                        case .codeOnly:            return codeExtensions.contains(ext)
@@ -170,7 +174,10 @@ class FinderSync: FIFinderSync {
     
 
     @objc func newFile() {
-        let folderURL  = FIFinderSyncController.default().targetedURL()!
+        guard let folderURL = FIFinderSyncController.default().targetedURL() else {
+            Logger.app.error("newFile: targetedURL is nil")
+            return
+        }
         manager.target = folderURL.path()
         DistributedNotificationCenter.default().post(
             name: .creteNewFile,

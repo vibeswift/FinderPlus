@@ -31,7 +31,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             if let folderPath = settings.target {
-                let fileURL = URL(filePath: folderPath.removingPercentEncoding!).appendingPathComponent("helper_created_\(Int(Date().timeIntervalSince1970)).txt")
+                let decodedPath = folderPath.removingPercentEncoding ?? folderPath
+                let fileURL = URL(filePath: decodedPath).appendingPathComponent("helper_created_\(Int(Date().timeIntervalSince1970)).txt")
                 do {
                     try Data().write(to: fileURL)
                 } catch let error as NSError {

@@ -6,9 +6,17 @@ import OSLog
 @Observable
 final class PermissionManager {
     static let shared = PermissionManager()
-    let extID = Bundle.main.bundleIdentifier.map { "\($0).FinderPlusExt" }!
-    let helperID = Bundle.main.bundleIdentifier.map { "\($0).FinderPlusHelper" }!
- 
+    let extID: String
+    let helperID: String
+
+    private init() {
+        guard let bundleID = Bundle.main.bundleIdentifier else {
+            fatalError("Bundle identifier not found")
+        }
+        self.extID = "\(bundleID).FinderPlusExt"
+        self.helperID = "\(bundleID).FinderPlusHelper"
+    }
+
     // MARK: - 可观察的存储属性
     var extensionEnabled = false
     

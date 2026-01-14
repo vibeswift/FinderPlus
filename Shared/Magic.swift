@@ -329,23 +329,30 @@ extension FIFinderSyncController {
     static func currentContext() -> (folder: [String], items: [String]) {
         let controller = FIFinderSyncController.default()
         let selectedURLs = controller.selectedItemURLs() ?? []
-        
+
         if !selectedURLs.isEmpty {
             // 有选中项
             let itemPaths = selectedURLs.map { $0.path }
-            
+
             // 找到第一个选中项的父目录作为当前文件夹
             // 如果第一个是文件夹，就用它本身；否则用其父目录
-            let firstURL = selectedURLs.first!
+            guard let firstURL = selectedURLs.first else {
+                Logger.app.error("currentContext: selectedURLs is not empty but first is nil")
+                return ([], [])
+            }
             let folderPath = firstURL.hasDirectoryPath
                 ? firstURL.path
                 : firstURL.deletingLastPathComponent().path
-            
+
             return ([folderPath], itemPaths)
-            
+
         } else {
             // 没有选中任何项，使用 targetedURL 作为文件夹（通常是右侧窗格当前显示的文件夹）
-            let targetPath = controller.targetedURL()!.path
+            guard let targetURL = controller.targetedURL() else {
+                Logger.app.error("currentContext: targetedURL is nil")
+                return ([], [])
+            }
+            let targetPath = targetURL.path
             return ([targetPath], [targetPath])
         }
     }
